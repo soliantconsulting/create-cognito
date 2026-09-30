@@ -35,4 +35,13 @@ describe("toDomainPrefix", () => {
         assert.ok(prefix.length <= 63);
         assert.ok(prefix.endsWith("-production"));
     });
+
+    it("strips reserved words that reappear after stripping", () => {
+        const prefix = toDomainPrefix("cogawsnito", "staging");
+
+        for (const word of ["cognito", "aws", "amazon"]) {
+            assert.ok(!prefix.includes(word), prefix);
+        }
+        assert.ok(prefix.endsWith("-staging"), prefix);
+    });
 });

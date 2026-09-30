@@ -1,3 +1,6 @@
+{%- if spaSettings %}
+import assert from "node:assert/strict";
+{%- endif %}
 import { describe, it } from "node:test";
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
@@ -96,6 +99,15 @@ describe("CognitoStack", () => {
             LogoutURLs: ["http://localhost:3010"],
             RefreshTokenRotation: Match.objectLike({ Feature: "ENABLED" }),
         });
+    });
+
+    it("does not allow the refresh token auth flow, which conflicts with rotation", () => {
+        const clients = synth(false).findResources("AWS::Cognito::UserPoolClient");
+
+        for (const client of Object.values(clients)) {
+            const flows = (client.Properties.ExplicitAuthFlows ?? []) as string[];
+            assert.ok(!flows.includes("ALLOW_REFRESH_TOKEN_AUTH"), JSON.stringify(flows));
+        }
     });
 
     it("gives the SPA client a Managed Login style", () => {

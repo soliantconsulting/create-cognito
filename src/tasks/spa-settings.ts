@@ -1,5 +1,6 @@
 import { ListrEnquirerPromptAdapter } from "@listr2/prompt-adapter-enquirer";
 import type { ListrTask } from "listr2";
+import slug from "slug";
 import { deriveNames } from "../names.js";
 
 export type SpaSettingsContext = {
@@ -31,6 +32,7 @@ export const spaSettingsTask: ListrTask<Partial<SpaSettingsContext>> = {
         const name = await prompt.run<string>({
             type: "input",
             message: "Friendly name (e.g. My Web):",
+            validate: (value: string) => slug(value) !== "" || "Enter a name",
         });
 
         context.spaSettings = { name, ...deriveNames(name, "Client") };

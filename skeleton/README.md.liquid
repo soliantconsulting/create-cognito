@@ -18,8 +18,11 @@ outputs, which the app projects need:
 | `Issuer` + `/.well-known/jwks.json` | API `jwt.jwksUri` |
 | `SpaClientId` | API `jwt.clientIds`; React `VITE_APP_COGNITO_CLIENT_ID` |
 | `HostedDomain` | React `VITE_APP_COGNITO_DOMAIN` |
-| `ApiScope` | React `VITE_APP_COGNITO_SCOPE` (append to `openid email profile`) |
+| `ApiScope` | React `VITE_APP_COGNITO_SCOPE` (`openid email profile`, plus `ApiScope` if the API checks scopes; the starter API does not) |
 | `UserPoolArn` | API CDK `userPoolArn` |
+
+Cognito domain prefixes are unique per region across all of AWS. If a deploy fails because the
+prefix is taken, change `domainPrefix` in `src/env-*.ts`.
 
 ## Email
 
@@ -40,8 +43,14 @@ with no trailing slash.
 
 ## Users
 
-Self sign-up is off. Invite users from the Cognito console or the API. Put administrators in the
-`admin` group; the group appears in the access token's `cognito:groups` claim.
+Self sign-up is off. Invite users from the Cognito console or the CLI. Mark the email as verified,
+otherwise password reset does not work:
+
+```bash
+aws cognito-idp admin-create-user --user-pool-id <UserPoolId> --username <email> --user-attributes Name=email,Value=<email> Name=email_verified,Value=true --desired-delivery-mediums EMAIL
+```
+
+Put administrators in the `admin` group; the group appears in the access token's `cognito:groups` claim.
 
 ## Deleting
 

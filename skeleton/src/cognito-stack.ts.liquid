@@ -112,6 +112,7 @@ export class CognitoStack extends Stack {
         const spaClient = userPool.addClient("{{spaSettings.resourceName}}", {
             userPoolClientName: {{ spaSettings.name | json }},
             generateSecret: false,
+            authFlows: { userSrp: true },
             oAuth: {
                 flows: { authorizationCodeGrant: true },
                 scopes: [

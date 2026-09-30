@@ -21,9 +21,15 @@ const reservedWords = /aws|amazon|cognito/g;
 const maxDomainPrefixLength = 63;
 
 export const toDomainPrefix = (projectName: string, envName: string): string => {
-    const base = projectName
-        .toLowerCase()
-        .replace(reservedWords, "")
+    let stripped = projectName.toLowerCase();
+    let previous: string;
+
+    do {
+        previous = stripped;
+        stripped = stripped.replace(reservedWords, "");
+    } while (stripped !== previous);
+
+    const base = stripped
         .replace(/[^a-z0-9-]+/g, "-")
         .replace(/-{2,}/g, "-")
         .replace(/^-|-$/g, "");

@@ -35,11 +35,14 @@ export const poolSettingsTask: ListrTask<Partial<PoolSettingsContext>> = {
                 name: "friendlyName",
                 type: "input",
                 message: "Friendly name (e.g. Acme Portal):",
+                validate: (value: string) => slug(value) !== "" || "Enter a name",
             },
             {
                 name: "fromAddress",
                 type: "input",
                 message: "Email from address:",
+                validate: (value: string) =>
+                    (value.trim() !== "" && value.includes("@")) || "Enter an email address",
             },
         ]);
 

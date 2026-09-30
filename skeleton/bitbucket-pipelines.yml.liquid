@@ -14,6 +14,7 @@ definitions:
           - 'self.hosted'
           - 'linux'
         script:
+          - npm install -g corepack@latest
           - corepack enable
           - pnpm install
           - pnpm biome ci .
@@ -35,6 +36,7 @@ definitions:
           - export AWS_WEB_IDENTITY_TOKEN_FILE=$(pwd)/web-identity-token
           - echo $BITBUCKET_STEP_OIDC_TOKEN > $(pwd)/web-identity-token
           # Install dependencies
+          - npm install -g corepack@latest
           - corepack enable
           - pnpm install
           # Deploy with CDK
