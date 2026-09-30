@@ -1,0 +1,7 @@
+sideEffectsCache: false
+allowBuilds:
+  '@biomejs/biome': true
+  esbuild: true
+  lefthook: true
+minimumReleaseAgeExclude:
+  - aws-cdk-lib@2.272.0

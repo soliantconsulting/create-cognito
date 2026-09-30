@@ -1,0 +1,50 @@
+{
+  "name": "@soliantconsulting/create-cognito",
+  "version": "0.0.0-development",
+  "description": "Create Cognito user pool projects with Bitbucket Pipelines and CDK integration",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/soliantconsulting/create-cognito.git"
+  },
+  "type": "module",
+  "author": "Soliant Consulting",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist/**/*",
+    "skeleton/**/*"
+  ],
+  "bin": {
+    "create-cognito": "./dist/cli.js"
+  },
+  "scripts": {
+    "test": "tsx --test 'test/**/*.test.ts'",
+    "test-synth": "rm -rf ./test-synth && tsx ./src/test-cli.ts full",
+    "test-synth:minimal": "rm -rf ./test-synth-minimal && tsx ./src/test-cli.ts minimal",
+    "build": "tsc",
+    "format": "biome format . --write",
+    "check": "biome check . --write"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.6",
+    "@commitlint/cli": "^21.2.1",
+    "@commitlint/config-conventional": "^21.2.0",
+    "@tsconfig/node26": "^26.0.0",
+    "@types/node": "^26.1.2",
+    "@types/slug": "^5.0.9",
+    "lefthook": "^2.1.10",
+    "tsx": "^4.23.4",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@listr2/prompt-adapter-enquirer": "^4.3.0",
+    "@soliantconsulting/starter-lib": "^3.0.0",
+    "aws-cdk-lib": "^2.272.0",
+    "camelcase": "^9.0.0",
+    "enquirer": "^2.4.1",
+    "listr2": "^11.0.0",
+    "slug": "^12.0.1"
+  }
+}

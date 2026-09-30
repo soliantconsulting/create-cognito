@@ -1,0 +1,14 @@
+{
+    "extends": ["@tsconfig/node26/tsconfig.json"],
+    "compilerOptions": {
+        "strict": true,
+        "types": ["node"],
+        "noImplicitAny": true,
+        "sourceMap": true,
+        "rootDir": "src",
+        "outDir": "dist"
+    },
+    "include": [
+        "src/**/*"
+    ]
+}
