@@ -3,7 +3,7 @@ import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { CognitoStack } from "../src/cognito-stack.js";
 
-const synth = (useSes: boolean): Template => {
+const synth = (useSes: boolean, createEmailIdentity = true): Template => {
     const app = new App();
     const stack = new CognitoStack(app, "TestStack", {
         env: { account: "123456789012", region: "{{awsEnv.region}}" },
@@ -11,6 +11,7 @@ const synth = (useSes: boolean): Template => {
         domainPrefix: "test-prefix",
         fromAddress: "auth@example.com",
         useSes,
+        createEmailIdentity,
         {%- if spaSettings %}
         {{spaSettings.propPrefix}}Urls: ["http://localhost:3010"],
         {%- endif %}
@@ -56,10 +57,34 @@ describe("CognitoStack", () => {
         });
     });
 
-    it("always creates the SES identity so it can be verified", () => {
-        synth(false).hasResourceProperties("AWS::SES::EmailIdentity", {
+    it("creates the SES identity when createEmailIdentity is true", () => {
+        synth(false, true).hasResourceProperties("AWS::SES::EmailIdentity", {
             EmailIdentity: "auth@example.com",
         });
+    });
+
+    it("skips the SES identity when createEmailIdentity is false", () => {
+        synth(false, false).resourceCountIs("AWS::SES::EmailIdentity", 0);
+    });
+
+    it("treats email sign-in as case-insensitive", () => {
+        synth(false).hasResourceProperties("AWS::Cognito::UserPool", {
+            UsernameConfiguration: { CaseSensitive: false },
+        });
+    });
+
+    it("exports the outputs other projects rely on", () => {
+        const template = synth(false);
+
+        for (const name of ["UserPoolId", "UserPoolArn", "Issuer", "HostedDomain"]) {
+            template.hasOutput(name, {});
+        }
+        {%- if spaSettings %}
+        template.hasOutput("SpaClientId", {});
+        {%- endif %}
+        {%- if apiSettings %}
+        template.hasOutput("ApiScope", {});
+        {%- endif %}
     });
     {%- if spaSettings %}
 

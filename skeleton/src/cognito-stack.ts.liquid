@@ -39,6 +39,11 @@ export type CognitoStackProps = StackProps & {
      * email itself, which is limited to a few messages a day.
      */
     useSes: boolean;
+    /**
+     * The SES identity is account-wide, so only one environment creates it. Environments that
+     * share an account and region must set this to true in one of them only.
+     */
+    createEmailIdentity: boolean;
     {%- if spaSettings %}
     {{spaSettings.propPrefix}}Urls: string[];
     {%- endif %}
@@ -48,14 +53,17 @@ export class CognitoStack extends Stack {
     public constructor(scope: Construct, id: string, props: CognitoStackProps) {
         super(scope, id, props);
 
-        new EmailIdentity(this, "EmailIdentity", {
-            identity: Identity.email(props.fromAddress),
-        });
+        if (props.createEmailIdentity) {
+            new EmailIdentity(this, "EmailIdentity", {
+                identity: Identity.email(props.fromAddress),
+            });
+        }
 
         const userPool = new UserPool(this, "UserPool", {
             userPoolName: `{{poolSettings.identifier}}-${props.envName}`,
             featurePlan: FeaturePlan.ESSENTIALS,
             signInAliases: { email: true },
+            signInCaseSensitive: false,
             selfSignUpEnabled: false,
             autoVerify: { email: true },
             passwordPolicy: {
