@@ -1,0 +1,22 @@
+import { App } from "aws-cdk-lib";
+import { CognitoStack } from "./cognito-stack.js";
+
+const app = new App();
+
+new CognitoStack(app, "{{project.name}}-staging", {
+    env: {
+        account: "{{awsEnv.accountId}}",
+        region: "{{awsEnv.region}}",
+    },
+    envName: "staging",
+    domainPrefix: "{{domainPrefixes.staging}}",
+    fromAddress: {{ poolSettings.fromAddress | json }},
+    // Set to true after the SES verification email has been confirmed (see README).
+    useSes: false,
+    {%- if spaSettings %}
+    // Exact origins, no trailing slash. Add the deployed app's URL next to localhost.
+    {{spaSettings.propPrefix}}Urls: ["http://localhost:3010"],
+    {%- endif %}
+});
+
+app.synth();

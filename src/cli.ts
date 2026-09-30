@@ -11,8 +11,10 @@ import {
     runPipeline,
 } from "@soliantconsulting/starter-lib";
 import { apiSettingsTask } from "./tasks/api-settings.js";
+import { domainPrefixesTask } from "./tasks/domain-prefixes.js";
 import { poolSettingsTask } from "./tasks/pool-settings.js";
 import { spaSettingsTask } from "./tasks/spa-settings.js";
+import { synthTask } from "./tasks/synth.js";
 
 await runPipeline({
     packageName: "@soliantconsulting/create-cognito",
@@ -30,6 +32,8 @@ await runPipeline({
         poolSettingsTask,
         spaSettingsTask,
         apiSettingsTask,
+        domainPrefixesTask,
+        synthTask,
         createGitTask(),
     ],
 });

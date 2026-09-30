@@ -1,0 +1,10 @@
+{
+    "extends": ["@tsconfig/node26/tsconfig.json"],
+    "compilerOptions": {
+        "strict": true,
+        "noImplicitAny": true,
+        "sourceMap": true,
+        "types": ["node"]
+    },
+    "include": ["src/**/*", "test/**/*"]
+}

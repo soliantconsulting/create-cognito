@@ -1,0 +1,88 @@
+import { describe, it } from "node:test";
+import { App } from "aws-cdk-lib";
+import { Match, Template } from "aws-cdk-lib/assertions";
+import { CognitoStack } from "../src/cognito-stack.js";
+
+const synth = (useSes: boolean): Template => {
+    const app = new App();
+    const stack = new CognitoStack(app, "TestStack", {
+        env: { account: "123456789012", region: "{{awsEnv.region}}" },
+        envName: "test",
+        domainPrefix: "test-prefix",
+        fromAddress: "auth@example.com",
+        useSes,
+        {%- if spaSettings %}
+        {{spaSettings.propPrefix}}Urls: ["http://localhost:3010"],
+        {%- endif %}
+    });
+
+    return Template.fromStack(stack);
+};
+
+describe("CognitoStack", () => {
+    it("keeps the user pool when the stack is deleted", () => {
+        synth(false).hasResource("AWS::Cognito::UserPool", {
+            DeletionPolicy: "Retain",
+            UpdateReplacePolicy: "Retain",
+        });
+    });
+
+    it("only lets admins create users", () => {
+        synth(false).hasResourceProperties("AWS::Cognito::UserPool", {
+            AdminCreateUserConfig: { AllowAdminCreateUserOnly: true },
+            Policies: { PasswordPolicy: Match.objectLike({ MinimumLength: 12 }) },
+        });
+    });
+
+    it("creates an admin group", () => {
+        synth(false).hasResourceProperties("AWS::Cognito::UserPoolGroup", {
+            GroupName: "admin",
+        });
+    });
+
+    it("uses Managed Login on the Cognito domain", () => {
+        synth(false).hasResourceProperties("AWS::Cognito::UserPoolDomain", {
+            Domain: "test-prefix",
+            ManagedLoginVersion: 2,
+        });
+    });
+
+    it("sends email through Cognito until SES is turned on", () => {
+        synth(false).hasResourceProperties("AWS::Cognito::UserPool", {
+            EmailConfiguration: { EmailSendingAccount: "COGNITO_DEFAULT" },
+        });
+        synth(true).hasResourceProperties("AWS::Cognito::UserPool", {
+            EmailConfiguration: Match.objectLike({ EmailSendingAccount: "DEVELOPER" }),
+        });
+    });
+
+    it("always creates the SES identity so it can be verified", () => {
+        synth(false).hasResourceProperties("AWS::SES::EmailIdentity", {
+            EmailIdentity: "auth@example.com",
+        });
+    });
+    {%- if spaSettings %}
+
+    it("creates a public SPA client using the code flow", () => {
+        synth(false).hasResourceProperties("AWS::Cognito::UserPoolClient", {
+            GenerateSecret: false,
+            AllowedOAuthFlows: ["code"],
+            CallbackURLs: ["http://localhost:3010"],
+            LogoutURLs: ["http://localhost:3010"],
+            RefreshTokenRotation: Match.objectLike({ Feature: "ENABLED" }),
+        });
+    });
+
+    it("gives the SPA client a Managed Login style", () => {
+        synth(false).resourceCountIs("AWS::Cognito::ManagedLoginBranding", 1);
+    });
+    {%- endif %}
+    {%- if apiSettings %}
+
+    it("creates the API resource server", () => {
+        synth(false).hasResourceProperties("AWS::Cognito::UserPoolResourceServer", {
+            Identifier: "{{apiSettings.identifier}}",
+        });
+    });
+    {%- endif %}
+});

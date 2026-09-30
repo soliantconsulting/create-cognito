@@ -1,0 +1,147 @@
+import {
+    CfnOutput,
+    {%- if spaSettings %}
+    Duration,
+    {%- endif %}
+    RemovalPolicy,
+    Stack,
+    type StackProps,
+} from "aws-cdk-lib";
+import {
+    AccountRecovery,
+    {%- if spaSettings %}
+    CfnManagedLoginBranding,
+    {%- endif %}
+    FeaturePlan,
+    ManagedLoginVersion,
+    Mfa,
+    {%- if spaSettings %}
+    OAuthScope,
+    {%- endif %}
+    {%- if apiSettings %}
+    ResourceServerScope,
+    {%- endif %}
+    UserPool,
+    {%- if spaSettings %}
+    UserPoolClientIdentityProvider,
+    {%- endif %}
+    UserPoolEmail,
+} from "aws-cdk-lib/aws-cognito";
+import { EmailIdentity, Identity } from "aws-cdk-lib/aws-ses";
+import type { Construct } from "constructs";
+
+export type CognitoStackProps = StackProps & {
+    envName: string;
+    domainPrefix: string;
+    fromAddress: string;
+    /**
+     * Keep false until the SES identity for `fromAddress` is verified. Until then Cognito sends
+     * email itself, which is limited to a few messages a day.
+     */
+    useSes: boolean;
+    {%- if spaSettings %}
+    {{spaSettings.propPrefix}}Urls: string[];
+    {%- endif %}
+};
+
+export class CognitoStack extends Stack {
+    public constructor(scope: Construct, id: string, props: CognitoStackProps) {
+        super(scope, id, props);
+
+        new EmailIdentity(this, "EmailIdentity", {
+            identity: Identity.email(props.fromAddress),
+        });
+
+        const userPool = new UserPool(this, "UserPool", {
+            userPoolName: `{{poolSettings.identifier}}-${props.envName}`,
+            featurePlan: FeaturePlan.ESSENTIALS,
+            signInAliases: { email: true },
+            selfSignUpEnabled: false,
+            autoVerify: { email: true },
+            passwordPolicy: {
+                minLength: 12,
+                requireDigits: false,
+                requireLowercase: false,
+                requireUppercase: false,
+                requireSymbols: false,
+            },
+            mfa: Mfa.OPTIONAL,
+            mfaSecondFactor: { sms: false, otp: true },
+            accountRecovery: AccountRecovery.EMAIL_ONLY,
+            email: props.useSes
+                ? UserPoolEmail.withSES({
+                      fromEmail: props.fromAddress,
+                      fromName: {{ poolSettings.friendlyName | json }},
+                      sesRegion: "{{awsEnv.region}}",
+                  })
+                : UserPoolEmail.withCognito(),
+            removalPolicy: RemovalPolicy.RETAIN,
+        });
+
+        const domain = userPool.addDomain("Domain", {
+            cognitoDomain: { domainPrefix: props.domainPrefix },
+            managedLoginVersion: ManagedLoginVersion.NEWER_MANAGED_LOGIN,
+        });
+
+        userPool.addGroup("AdminGroup", {
+            groupName: "admin",
+            description: "Administrators",
+        });
+        {%- if apiSettings %}
+
+        const apiScope = new ResourceServerScope({
+            scopeName: "access",
+            scopeDescription: {{ apiSettings.name | prepend: "Access " | json }},
+        });
+        const apiResourceServer = userPool.addResourceServer("{{apiSettings.resourceName}}", {
+            identifier: "{{apiSettings.identifier}}",
+            userPoolResourceServerName: {{ apiSettings.name | json }},
+            scopes: [apiScope],
+        });
+        {%- endif %}
+        {%- if spaSettings %}
+
+        const spaClient = userPool.addClient("{{spaSettings.resourceName}}", {
+            userPoolClientName: {{ spaSettings.name | json }},
+            generateSecret: false,
+            oAuth: {
+                flows: { authorizationCodeGrant: true },
+                scopes: [
+                    OAuthScope.OPENID,
+                    OAuthScope.EMAIL,
+                    OAuthScope.PROFILE,
+                    {%- if apiSettings %}
+                    OAuthScope.resourceServer(apiResourceServer, apiScope),
+                    {%- endif %}
+                ],
+                callbackUrls: props.{{spaSettings.propPrefix}}Urls,
+                logoutUrls: props.{{spaSettings.propPrefix}}Urls,
+            },
+            supportedIdentityProviders: [UserPoolClientIdentityProvider.COGNITO],
+            preventUserExistenceErrors: true,
+            enableTokenRevocation: true,
+            accessTokenValidity: Duration.hours(1),
+            idTokenValidity: Duration.hours(1),
+            refreshTokenValidity: Duration.days(30),
+            refreshTokenRotationGracePeriod: Duration.seconds(10),
+        });
+
+        new CfnManagedLoginBranding(this, "{{spaSettings.resourceName}}Branding", {
+            userPoolId: userPool.userPoolId,
+            clientId: spaClient.userPoolClientId,
+            useCognitoProvidedValues: true,
+        });
+
+        new CfnOutput(this, "SpaClientId", { value: spaClient.userPoolClientId });
+        {%- endif %}
+        {%- if apiSettings %}
+
+        new CfnOutput(this, "ApiScope", { value: "{{apiSettings.identifier}}/access" });
+        {%- endif %}
+
+        new CfnOutput(this, "UserPoolId", { value: userPool.userPoolId });
+        new CfnOutput(this, "UserPoolArn", { value: userPool.userPoolArn });
+        new CfnOutput(this, "Issuer", { value: `https://${userPool.userPoolProviderUrl}` });
+        new CfnOutput(this, "HostedDomain", { value: domain.baseUrl() });
+    }
+}
