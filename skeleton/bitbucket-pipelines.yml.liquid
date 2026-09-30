@@ -1,0 +1,64 @@
+image: public.ecr.aws/docker/library/node:26
+
+definitions:
+  caches:
+    pnpm:
+      key:
+        files:
+          - pnpm-lock.yaml
+      path: $BITBUCKET_CLONE_DIR/.pnpm-store
+  steps:
+    - step: &check
+        name: Check
+        runs-on:
+          - 'self.hosted'
+          - 'linux'
+        script:
+          - corepack enable
+          - pnpm install
+          - pnpm biome ci .
+          - pnpm typecheck
+          - pnpm test
+        caches:
+          - pnpm
+    - step: &deploy
+        runs-on:
+          - 'self.hosted'
+          - 'linux'
+        oidc: true
+        caches:
+          - pnpm
+        script:
+          # Configure OIDC
+          - export AWS_REGION={{awsEnv.region}}
+          - export AWS_ROLE_ARN={{deployRole.arn}}
+          - export AWS_WEB_IDENTITY_TOKEN_FILE=$(pwd)/web-identity-token
+          - echo $BITBUCKET_STEP_OIDC_TOKEN > $(pwd)/web-identity-token
+          # Install dependencies
+          - corepack enable
+          - pnpm install
+          # Deploy with CDK
+          - pnpm build
+          - pnpm cdk deploy --app "node dist/env-$BITBUCKET_DEPLOYMENT_ENVIRONMENT.js" --require-approval never
+
+pipelines:
+  branches:
+    main:
+      - step: *check
+      {%- if poolSettings.environments contains "staging" %}
+      - step:
+          <<: *deploy
+          name: Deploy Staging
+          deployment: staging
+          trigger: manual
+      {%- endif %}
+      {%- if poolSettings.environments contains "production" %}
+      - step:
+          <<: *deploy
+          name: Deploy Production
+          deployment: production
+          trigger: manual
+      {%- endif %}
+  pull-requests:
+    '**':
+      - step: *check

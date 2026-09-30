@@ -1,0 +1,49 @@
+# {{project.title}}
+
+AWS Cognito user pool for {{poolSettings.friendlyName}}, managed with CDK.
+
+## Setup
+
+- `pnpm install`
+- `pnpm test`
+
+## Deploying
+
+Bitbucket deploys each environment with a manual trigger on `main`. Each deploy prints these stack
+outputs, which the app projects need:
+
+| Output | Used by |
+| --- | --- |
+| `Issuer` | API `jwt.issuer`; React `VITE_APP_COGNITO_AUTHORITY` |
+| `Issuer` + `/.well-known/jwks.json` | API `jwt.jwksUri` |
+| `SpaClientId` | API `jwt.clientIds`; React `VITE_APP_COGNITO_CLIENT_ID` |
+| `HostedDomain` | React `VITE_APP_COGNITO_DOMAIN` |
+| `ApiScope` | React `VITE_APP_COGNITO_SCOPE` (append to `openid email profile`) |
+| `UserPoolArn` | API CDK `userPoolArn` |
+
+## Email
+
+The first deploy creates an SES identity for {{poolSettings.fromAddress}}, and AWS emails that address
+a verification link. Until it is clicked, keep `useSes: false`; Cognito then sends email itself
+(a few messages a day). After verifying, set `useSes: true` in the env file and deploy again.
+
+The SES identity is created by the first environment's stack (staging when there is one). Deleting
+that stack removes the identity the other environment uses.
+
+New AWS accounts start in the SES sandbox and can only email verified addresses. Request production
+access in the SES console before inviting real users.
+
+## App URLs
+
+Callback and logout URLs live in each `src/env-*.ts`. They must match the app's origin exactly,
+with no trailing slash.
+
+## Users
+
+Self sign-up is off. Invite users from the Cognito console or the API. Put administrators in the
+`admin` group; the group appears in the access token's `cognito:groups` claim.
+
+## Deleting
+
+The user pool is kept when the stack is deleted, so users are not lost by accident. Delete it by
+hand in the console if it really should go.
