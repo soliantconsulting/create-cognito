@@ -34,6 +34,21 @@ describe("CognitoStack", () => {
         });
     });
 
+    {%- if poolSettings.mfa == "off" %}
+    it("turns MFA off", () => {
+        synth(false).hasResourceProperties("AWS::Cognito::UserPool", {
+            MfaConfiguration: "OFF",
+        });
+    });
+    {%- else %}
+    it("uses an authenticator app for MFA", () => {
+        synth(false).hasResourceProperties("AWS::Cognito::UserPool", {
+            MfaConfiguration: "{% if poolSettings.mfa == "required" %}ON{% else %}OPTIONAL{% endif %}",
+            EnabledMfas: ["SOFTWARE_TOKEN_MFA"],
+        });
+    });
+    {%- endif %}
+
     it("only lets admins create users", () => {
         synth(false).hasResourceProperties("AWS::Cognito::UserPool", {
             AdminCreateUserConfig: { AllowAdminCreateUserOnly: true },

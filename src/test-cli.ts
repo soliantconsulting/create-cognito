@@ -45,6 +45,7 @@ await runPipeline({
             identifier: "test-pool",
             fromAddress: "auth@example.com",
             environments: minimal ? ["staging"] : ["staging", "production"],
+            mfa: minimal ? "off" : "required",
         },
         spaSettings: minimal
             ? null

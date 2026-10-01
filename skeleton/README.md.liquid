@@ -66,6 +66,30 @@ aws cognito-idp admin-create-user --user-pool-id <UserPoolId> --username <email>
 
 Put administrators in the `admin` group; the group appears in the access token's `cognito:groups` claim.
 
+## MFA
+
+{%- if poolSettings.mfa == "required" %}
+
+MFA is required. At first sign-in, Managed Login shows a QR code for an authenticator app (Google
+Authenticator, 1Password, Authy, ...) and asks for a code on every sign-in after that. If a user
+loses their device, clear their authenticator so Managed Login asks them to set it up again:
+
+```bash
+aws cognito-idp admin-set-user-mfa-preference --user-pool-id <UserPoolId> --username <email> --software-token-mfa-settings Enabled=false
+```
+{%- elsif poolSettings.mfa == "optional" %}
+
+MFA is optional with an authenticator app. Managed Login does not offer MFA setup unless MFA is
+required, so users can only turn it on through a setup screen in your app (`AssociateSoftwareToken`
+and `VerifySoftwareToken`, which need the `aws.cognito.signin.user.admin` scope on the client). To
+make everyone use it, set `mfa: Mfa.REQUIRED` in `src/cognito-stack.ts`.
+{%- else %}
+
+MFA is off. To turn it on, set `mfa: Mfa.REQUIRED` and `mfaSecondFactor: { sms: false, otp: true }`
+in `src/cognito-stack.ts`. Managed Login then walks every user through authenticator app setup at
+their next sign-in.
+{%- endif %}
+
 ## Deleting
 
 The user pool is kept when the stack is deleted, so users are not lost by accident. Delete it by

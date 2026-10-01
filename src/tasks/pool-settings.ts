@@ -4,6 +4,8 @@ import slug from "slug";
 
 export type CognitoEnvironment = "staging" | "production";
 
+export type MfaMode = "required" | "optional" | "off";
+
 const environmentOrder: CognitoEnvironment[] = ["staging", "production"];
 
 export type PoolSettingsContext = {
@@ -12,6 +14,7 @@ export type PoolSettingsContext = {
         identifier: string;
         fromAddress: string;
         environments: CognitoEnvironment[];
+        mfa: MfaMode;
     };
 };
 
@@ -56,11 +59,22 @@ export const poolSettingsTask: ListrTask<Partial<PoolSettingsContext>> = {
             validate: (value: string[]) => value.length > 0 || "Select at least one environment",
         });
 
+        const mfa = await prompt.run<MfaMode>({
+            type: "select",
+            message: "MFA:",
+            choices: [
+                { message: "Required (authenticator app)", name: "required" },
+                { message: "Optional (the app must offer its own setup screen)", name: "optional" },
+                { message: "Off", name: "off" },
+            ],
+        });
+
         context.poolSettings = {
             friendlyName: answers.friendlyName,
             identifier: slug(answers.friendlyName),
             fromAddress: answers.fromAddress.trim(),
             environments: parseEnvironments(selected),
+            mfa,
         };
     },
 };
