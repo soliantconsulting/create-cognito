@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { deriveNames, toDomainPrefix, toDomainPrefixBase } from "../src/names.js";
+import { deriveNames, toDomainPrefix, toDomainPrefixBase, validateAppName } from "../src/names.js";
 
 describe("deriveNames", () => {
     it("builds identifier, resource name and prop prefix from a friendly name", () => {
@@ -9,6 +9,20 @@ describe("deriveNames", () => {
             resourceName: "MyWebClient",
             propPrefix: "myWeb",
         });
+    });
+});
+
+describe("validateAppName", () => {
+    it("accepts a name that starts with a letter", () => {
+        assert.equal(validateAppName("My Web"), true);
+    });
+
+    it("rejects an empty name", () => {
+        assert.equal(validateAppName(""), "Enter a name");
+    });
+
+    it("rejects a name that starts with a digit", () => {
+        assert.equal(validateAppName("3D Portal"), "Start with a letter");
     });
 });
 

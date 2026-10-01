@@ -1,7 +1,6 @@
 import { ListrEnquirerPromptAdapter } from "@listr2/prompt-adapter-enquirer";
 import type { ListrTask } from "listr2";
-import slug from "slug";
-import { deriveNames } from "../names.js";
+import { deriveNames, validateAppName } from "../names.js";
 
 export type ApiSettingsContext = {
     apiSettings: {
@@ -31,7 +30,7 @@ export const apiSettingsTask: ListrTask<Partial<ApiSettingsContext>> = {
         const name = await prompt.run<string>({
             type: "input",
             message: "Friendly name (e.g. My API):",
-            validate: (value: string) => slug(value) !== "" || "Enter a name",
+            validate: validateAppName,
         });
 
         const { identifier, resourceName } = deriveNames(name, "ResourceServer");

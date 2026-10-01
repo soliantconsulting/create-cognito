@@ -17,6 +17,23 @@ export const deriveNames = (name: string, suffix: string): DerivedNames => {
     };
 };
 
+/**
+ * SPA and API names also become TypeScript identifiers, which cannot start with a digit.
+ */
+export const validateAppName = (name: string): true | string => {
+    const identifier = slug(name);
+
+    if (identifier === "") {
+        return "Enter a name";
+    }
+
+    if (/^\d/.test(identifier)) {
+        return "Start with a letter";
+    }
+
+    return true;
+};
+
 const reservedWords = /aws|amazon|cognito/g;
 const maxDomainPrefixLength = 63;
 
