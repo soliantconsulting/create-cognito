@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { deriveNames, toDomainPrefix } from "../src/names.js";
+import { deriveNames, toDomainPrefix, toDomainPrefixBase } from "../src/names.js";
 
 describe("deriveNames", () => {
     it("builds identifier, resource name and prop prefix from a friendly name", () => {
@@ -43,5 +43,15 @@ describe("toDomainPrefix", () => {
             assert.ok(!prefix.includes(word), prefix);
         }
         assert.ok(prefix.endsWith("-staging"), prefix);
+    });
+});
+
+describe("toDomainPrefixBase", () => {
+    it("returns a valid base unchanged", () => {
+        assert.equal(toDomainPrefixBase("acme-portal"), "acme-portal");
+    });
+
+    it("cleans a project name into a suggested base", () => {
+        assert.equal(toDomainPrefixBase("Acme_Cognito"), "acme");
     });
 });

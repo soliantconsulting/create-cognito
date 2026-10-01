@@ -20,8 +20,12 @@ export const deriveNames = (name: string, suffix: string): DerivedNames => {
 const reservedWords = /aws|amazon|cognito/g;
 const maxDomainPrefixLength = 63;
 
-export const toDomainPrefix = (projectName: string, envName: string): string => {
-    let stripped = projectName.toLowerCase();
+/**
+ * Cleans a name into the base of a Cognito domain prefix. Cognito rejects prefixes containing
+ * "aws", "amazon" or "cognito", and allows only lowercase letters, numbers and hyphens.
+ */
+export const toDomainPrefixBase = (name: string): string => {
+    let stripped = name.toLowerCase();
     let previous: string;
 
     do {
@@ -33,8 +37,14 @@ export const toDomainPrefix = (projectName: string, envName: string): string => 
         .replace(/[^a-z0-9-]+/g, "-")
         .replace(/-{2,}/g, "-")
         .replace(/^-|-$/g, "");
-    const safeBase = base === "" ? "auth" : base;
+
+    return base === "" ? "auth" : base;
+};
+
+export const toDomainPrefix = (name: string, envName: string): string => {
     const suffix = `-${envName}`;
 
-    return `${safeBase.slice(0, maxDomainPrefixLength - suffix.length).replace(/-$/, "")}${suffix}`;
+    return `${toDomainPrefixBase(name)
+        .slice(0, maxDomainPrefixLength - suffix.length)
+        .replace(/-$/, "")}${suffix}`;
 };
