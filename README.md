@@ -1,9 +1,8 @@
 # Create Cognito
 
-Init project for creating AWS Cognito user pool projects with Bitbucket Pipelines and CDK.
+Init project for creating AWS Cognito user pool projects with Bitbucket Pipelines integration.
 
-It is the Cognito counterpart to `create-auth0-cicd`. Use it with the Cognito options in
-`create-react-app` and `create-taxum-api`.
+To create a new project, run the following command:
 
 ```pnpm dlx @soliantconsulting/create-cognito@latest [<name>]```
 
@@ -11,7 +10,9 @@ The script will place the project in a directory with the given name under the c
 
 ## Using Cognito instead of Auth0
 
-Deploy the generated project, then copy its stack outputs into the app projects:
+This is the Cognito counterpart to `create-auth0-cicd`. Pick the Cognito options in
+`create-react-app` and `create-taxum-api`, deploy the generated project, then copy its stack
+outputs into those projects:
 
 | Output | `create-react-app` | `create-taxum-api` |
 | --- | --- | --- |
@@ -20,4 +21,4 @@ Deploy the generated project, then copy its stack outputs into the app projects:
 | `HostedDomain` | `VITE_APP_COGNITO_DOMAIN` | |
 | `UserPoolArn` | | CDK `userPoolArn` |
 
-The `[jwt]` settings go in the API's `dev-app-config`.
+The `[jwt]` settings go in the API's `dev-app-config.toml` locally and in AppConfig once deployed.

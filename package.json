@@ -1,7 +1,7 @@
 {
   "name": "@soliantconsulting/create-cognito",
   "version": "0.0.0-development",
-  "description": "Create Cognito user pool projects with Bitbucket Pipelines and CDK integration",
+  "description": "Create Cognito",
   "repository": {
     "type": "git",
     "url": "https://github.com/soliantconsulting/create-cognito.git"
