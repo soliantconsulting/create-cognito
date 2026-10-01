@@ -28,6 +28,12 @@ describe("CognitoStack", () => {
         });
     });
 
+    it("protects the user pool from deletion", () => {
+        synth(false).hasResourceProperties("AWS::Cognito::UserPool", {
+            DeletionProtection: "ACTIVE",
+        });
+    });
+
     it("only lets admins create users", () => {
         synth(false).hasResourceProperties("AWS::Cognito::UserPool", {
             AdminCreateUserConfig: { AllowAdminCreateUserOnly: true },
@@ -60,6 +66,13 @@ describe("CognitoStack", () => {
     it("creates the SES identity when createEmailIdentity is true", () => {
         synth(false, true).hasResourceProperties("AWS::SES::EmailIdentity", {
             EmailIdentity: "auth@example.com",
+        });
+    });
+
+    it("keeps the SES identity when the stack is deleted", () => {
+        synth(false, true).hasResource("AWS::SES::EmailIdentity", {
+            DeletionPolicy: "Retain",
+            UpdateReplacePolicy: "Retain",
         });
     });
 
@@ -118,8 +131,14 @@ describe("CognitoStack", () => {
         });
     });
 
-    it("gives the SPA client a Managed Login style", () => {
-        synth(false).resourceCountIs("AWS::Cognito::ManagedLoginBranding", 1);
+    it("gives the SPA client a Managed Login style once the domain exists", () => {
+        const template = synth(false);
+        const [domainId] = Object.keys(template.findResources("AWS::Cognito::UserPoolDomain"));
+
+        template.resourceCountIs("AWS::Cognito::ManagedLoginBranding", 1);
+        template.hasResource("AWS::Cognito::ManagedLoginBranding", {
+            DependsOn: Match.arrayWith([domainId]),
+        });
     });
     {%- endif %}
     {%- if apiSettings %}

@@ -54,9 +54,11 @@ export class CognitoStack extends Stack {
         super(scope, id, props);
 
         if (props.createEmailIdentity) {
-            new EmailIdentity(this, "EmailIdentity", {
+            const emailIdentity = new EmailIdentity(this, "EmailIdentity", {
                 identity: Identity.email(props.fromAddress),
             });
+            // Other environments in the account use this identity too.
+            emailIdentity.applyRemovalPolicy(RemovalPolicy.RETAIN);
         }
 
         const userPool = new UserPool(this, "UserPool", {
@@ -85,6 +87,7 @@ export class CognitoStack extends Stack {
                   })
                 : UserPoolEmail.withCognito(),
             removalPolicy: RemovalPolicy.RETAIN,
+            deletionProtection: true,
         });
 
         const domain = userPool.addDomain("Domain", {
@@ -139,11 +142,13 @@ export class CognitoStack extends Stack {
             refreshTokenRotationGracePeriod: Duration.seconds(10),
         });
 
-        new CfnManagedLoginBranding(this, "{{spaSettings.resourceName}}Branding", {
+        const branding = new CfnManagedLoginBranding(this, "{{spaSettings.resourceName}}Branding", {
             userPoolId: userPool.userPoolId,
             clientId: spaClient.userPoolClientId,
             useCognitoProvidedValues: true,
         });
+        // Branding fails before the Managed Login domain exists, and nothing else orders them.
+        branding.node.addDependency(domain);
 
         new CfnOutput(this, "SpaClientId", { value: spaClient.userPoolClientId });
         {%- endif %}
