@@ -61,7 +61,6 @@ await runPipeline({
             ? null
             : {
                   name: "Test SPA",
-                  identifier: "test-spa",
                   resourceName: "TestSpaClient",
                   propPrefix: "testSpa",
               },

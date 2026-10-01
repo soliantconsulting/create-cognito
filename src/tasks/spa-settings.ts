@@ -5,7 +5,6 @@ import { deriveNames, validateAppName } from "../names.js";
 export type SpaSettingsContext = {
     spaSettings: {
         name: string;
-        identifier: string;
         resourceName: string;
         propPrefix: string;
     } | null;
@@ -34,6 +33,7 @@ export const spaSettingsTask: ListrTask<Partial<SpaSettingsContext>> = {
             validate: validateAppName,
         });
 
-        context.spaSettings = { name, ...deriveNames(name, "Client") };
+        const { resourceName, propPrefix } = deriveNames(name, "Client");
+        context.spaSettings = { name, resourceName, propPrefix };
     },
 };

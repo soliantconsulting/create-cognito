@@ -1,7 +1,7 @@
 import camelcase from "camelcase";
 import slug from "slug";
 
-export type DerivedNames = {
+type DerivedNames = {
     identifier: string;
     resourceName: string;
     propPrefix: string;

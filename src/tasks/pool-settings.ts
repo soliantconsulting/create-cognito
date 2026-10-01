@@ -4,9 +4,7 @@ import slug from "slug";
 
 export type CognitoEnvironment = "staging" | "production";
 
-export type MfaMode = "required" | "optional" | "off";
-
-const environmentOrder: CognitoEnvironment[] = ["staging", "production"];
+type MfaMode = "required" | "optional" | "off";
 
 export type PoolSettingsContext = {
     poolSettings: {
@@ -17,9 +15,6 @@ export type PoolSettingsContext = {
         mfa: MfaMode;
     };
 };
-
-export const parseEnvironments = (selected: string[]): CognitoEnvironment[] =>
-    environmentOrder.filter((environment) => selected.includes(environment));
 
 type PoolAnswers = {
     friendlyName: string;
@@ -49,7 +44,7 @@ export const poolSettingsTask: ListrTask<Partial<PoolSettingsContext>> = {
             },
         ]);
 
-        const selected = await prompt.run<string[]>({
+        const environments = await prompt.run<CognitoEnvironment[]>({
             type: "multiselect",
             message: "Environments:",
             choices: [
@@ -73,7 +68,7 @@ export const poolSettingsTask: ListrTask<Partial<PoolSettingsContext>> = {
             friendlyName: answers.friendlyName,
             identifier: slug(answers.friendlyName),
             fromAddress: answers.fromAddress.trim(),
-            environments: parseEnvironments(selected),
+            environments,
             mfa,
         };
     },
