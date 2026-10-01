@@ -15,22 +15,22 @@ export type PoolSettingsContext = {
     };
 };
 
-export const parseEnvironments = (selected: string[]): CognitoEnvironment[] => {
-    const environments = environmentOrder.filter((environment) => selected.includes(environment));
+export const parseEnvironments = (selected: string[]): CognitoEnvironment[] =>
+    environmentOrder.filter((environment) => selected.includes(environment));
 
-    if (environments.length === 0) {
-        throw new Error("Select at least one environment");
-    }
-
-    return environments;
+type PoolAnswers = {
+    friendlyName: string;
+    fromAddress: string;
 };
+
+const emailAddressPattern = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 
 export const poolSettingsTask: ListrTask<Partial<PoolSettingsContext>> = {
     title: "Gather user pool settings",
     task: async (context, task): Promise<void> => {
         const prompt = task.prompt(ListrEnquirerPromptAdapter);
 
-        const answers = await prompt.run<{ friendlyName: string; fromAddress: string }>([
+        const answers = await prompt.run<PoolAnswers>([
             {
                 name: "friendlyName",
                 type: "input",
@@ -42,34 +42,25 @@ export const poolSettingsTask: ListrTask<Partial<PoolSettingsContext>> = {
                 type: "input",
                 message: "Email from address:",
                 validate: (value: string) =>
-                    (value.trim() !== "" && value.includes("@")) || "Enter an email address",
+                    emailAddressPattern.test(value.trim()) || "Enter an email address",
             },
         ]);
 
-        let environments: CognitoEnvironment[] | null = null;
-
-        while (environments === null) {
-            const selected = await prompt.run<string[]>({
-                type: "multiselect",
-                message: "Environments:",
-                choices: [
-                    { message: "Staging", name: "staging" },
-                    { message: "Production", name: "production" },
-                ],
-            });
-
-            try {
-                environments = parseEnvironments(selected);
-            } catch (error) {
-                task.output = (error as Error).message;
-            }
-        }
+        const selected = await prompt.run<string[]>({
+            type: "multiselect",
+            message: "Environments:",
+            choices: [
+                { message: "Staging", name: "staging" },
+                { message: "Production", name: "production" },
+            ],
+            validate: (value: string[]) => value.length > 0 || "Select at least one environment",
+        });
 
         context.poolSettings = {
             friendlyName: answers.friendlyName,
             identifier: slug(answers.friendlyName),
-            fromAddress: answers.fromAddress,
-            environments,
+            fromAddress: answers.fromAddress.trim(),
+            environments: parseEnvironments(selected),
         };
     },
 };

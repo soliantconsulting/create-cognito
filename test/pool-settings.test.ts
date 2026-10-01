@@ -6,8 +6,4 @@ describe("parseEnvironments", () => {
     it("keeps staging before production", () => {
         assert.deepEqual(parseEnvironments(["production", "staging"]), ["staging", "production"]);
     });
-
-    it("rejects an empty selection", () => {
-        assert.throws(() => parseEnvironments([]), /at least one environment/);
-    });
 });
