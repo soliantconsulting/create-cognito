@@ -34,6 +34,13 @@ The first deploy creates an SES identity for {{poolSettings.fromAddress}}, and A
 a verification link. Until it is clicked, keep `useSes: false`; Cognito then sends email itself
 (a few messages a day). After verifying, set `useSes: true` in the env file and deploy again.
 
+Do not turn on `useSes` before the address is verified: Cognito then drops invites and password
+reset emails without any error.
+
+If the domain of the from address is already verified in SES (check the SES console), set
+`sesVerifiedDomain` to that domain in the env file instead. No address identity is created, no
+verification click is needed, and `useSes: true` works on the first deploy.
+
 The SES identity is created by the first environment's stack (staging when there is one). It is
 kept when that stack is deleted, so the other environment can still send email. Delete it by hand
 in the SES console if it really should go. Redeploying a deleted stack fails while the identity

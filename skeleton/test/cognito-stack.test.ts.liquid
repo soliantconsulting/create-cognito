@@ -1,9 +1,14 @@
+import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { CognitoStack } from "../src/cognito-stack.js";
 
-const synth = (useSes: boolean, createEmailIdentity = true): Template => {
+const synth = (
+    useSes: boolean,
+    createEmailIdentity = true,
+    sesVerifiedDomain?: string,
+): Template => {
     const app = new App();
     const stack = new CognitoStack(app, "TestStack", {
         env: { account: "123456789012", region: "{{awsEnv.region}}" },
@@ -12,6 +17,7 @@ const synth = (useSes: boolean, createEmailIdentity = true): Template => {
         fromAddress: "auth@example.com",
         useSes,
         createEmailIdentity,
+        sesVerifiedDomain,
         {%- if spaSettings %}
         {{spaSettings.propPrefix}}Urls: ["http://localhost:3010"],
         {%- endif %}
@@ -93,6 +99,17 @@ describe("CognitoStack", () => {
 
     it("skips the SES identity when createEmailIdentity is false", () => {
         synth(false, false).resourceCountIs("AWS::SES::EmailIdentity", 0);
+    });
+
+    it("sends through a verified domain without creating an address identity", () => {
+        const template = synth(true, true, "example.com");
+
+        template.resourceCountIs("AWS::SES::EmailIdentity", 0);
+
+        // The ARN is an Fn::Join with the partition, so compare its serialized form.
+        const [userPool] = Object.values(template.findResources("AWS::Cognito::UserPool"));
+        const sourceArn = JSON.stringify(userPool?.Properties.EmailConfiguration.SourceArn);
+        assert.match(sourceArn, /:identity\/example\.com"/);
     });
 
     it("keeps the old email until a new one is verified", () => {

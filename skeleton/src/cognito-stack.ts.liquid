@@ -44,6 +44,11 @@ export type CognitoStackProps = StackProps & {
      * share an account and region must set this to true in one of them only.
      */
     createEmailIdentity: boolean;
+    /**
+     * Set when the domain of `fromAddress` is already verified in SES. Cognito then sends through
+     * the domain identity, so the address needs no verification click and no identity is created.
+     */
+    sesVerifiedDomain?: string;
     {%- if spaSettings %}
     {{spaSettings.propPrefix}}Urls: string[];
     {%- endif %}
@@ -53,7 +58,7 @@ export class CognitoStack extends Stack {
     public constructor(scope: Construct, id: string, props: CognitoStackProps) {
         super(scope, id, props);
 
-        if (props.createEmailIdentity) {
+        if (props.createEmailIdentity && !props.sesVerifiedDomain) {
             const emailIdentity = new EmailIdentity(this, "EmailIdentity", {
                 identity: Identity.email(props.fromAddress),
             });
@@ -87,6 +92,7 @@ export class CognitoStack extends Stack {
             email: props.useSes
                 ? UserPoolEmail.withSES({
                       fromEmail: props.fromAddress,
+                      sesVerifiedDomain: props.sesVerifiedDomain,
                       fromName: {{ poolSettings.friendlyName | json }},
                       sesRegion: "{{awsEnv.region}}",
                   })
