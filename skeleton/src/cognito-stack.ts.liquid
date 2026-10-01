@@ -105,7 +105,11 @@ export class CognitoStack extends Stack {
             scopeName: "access",
             scopeDescription: {{ apiSettings.name | prepend: "Access " | json }},
         });
+        {%- if spaSettings %}
         const apiResourceServer = userPool.addResourceServer("{{apiSettings.resourceName}}", {
+        {%- else %}
+        userPool.addResourceServer("{{apiSettings.resourceName}}", {
+        {%- endif %}
             identifier: "{{apiSettings.identifier}}",
             userPoolResourceServerName: {{ apiSettings.name | json }},
             scopes: [apiScope],
