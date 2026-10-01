@@ -84,14 +84,9 @@ describe("CognitoStack", () => {
         });
     });
 
-    it("creates the SES identity when createEmailIdentity is true", () => {
-        synth(false, true).hasResourceProperties("AWS::SES::EmailIdentity", {
-            EmailIdentity: "auth@example.com",
-        });
-    });
-
-    it("keeps the SES identity when the stack is deleted", () => {
-        synth(false, true).hasResource("AWS::SES::EmailIdentity", {
+    it("creates the SES identity and keeps it when the stack is deleted", () => {
+        synth(false).hasResource("AWS::SES::EmailIdentity", {
+            Properties: { EmailIdentity: "auth@example.com" },
             DeletionPolicy: "Retain",
             UpdateReplacePolicy: "Retain",
         });

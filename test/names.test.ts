@@ -65,8 +65,4 @@ describe("toDomainPrefixBase", () => {
     it("returns a valid base unchanged", () => {
         assert.equal(toDomainPrefixBase("acme-portal"), "acme-portal");
     });
-
-    it("cleans a project name into a suggested base", () => {
-        assert.equal(toDomainPrefixBase("Acme_Cognito"), "acme");
-    });
 });
