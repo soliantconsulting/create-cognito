@@ -66,6 +66,7 @@ export class CognitoStack extends Stack {
             signInCaseSensitive: false,
             selfSignUpEnabled: false,
             autoVerify: { email: true },
+            keepOriginal: { email: true },
             passwordPolicy: {
                 minLength: 12,
                 requireDigits: false,
@@ -112,7 +113,10 @@ export class CognitoStack extends Stack {
         const spaClient = userPool.addClient("{{spaSettings.resourceName}}", {
             userPoolClientName: {{ spaSettings.name | json }},
             generateSecret: false,
-            authFlows: { userSrp: true },
+            // Sign-in goes through Managed Login only. Leaving authFlows out would let Cognito
+            // default to SRP, custom and refresh token auth, and refresh token auth conflicts
+            // with rotation. Any key set to false makes CDK send an empty list instead.
+            authFlows: { userSrp: false },
             oAuth: {
                 flows: { authorizationCodeGrant: true },
                 scopes: [
