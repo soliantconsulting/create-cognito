@@ -16,9 +16,13 @@ outputs, which the app projects need:
 | --- | --- |
 | `Issuer` | API `jwt.issuer`; React `VITE_APP_COGNITO_AUTHORITY` |
 | `Issuer` + `/.well-known/jwks.json` | API `jwt.jwksUri` |
+{%- if spaSettings %}
 | `SpaClientId` | API `jwt.clientIds`; React `VITE_APP_COGNITO_CLIENT_ID` |
+{%- endif %}
 | `HostedDomain` | React `VITE_APP_COGNITO_DOMAIN` |
+{%- if apiSettings %}
 | `ApiScope` | React `VITE_APP_COGNITO_SCOPE` (`openid email profile`, plus `ApiScope` if the API checks scopes; the starter API does not) |
+{%- endif %}
 | `UserPoolArn` | API CDK `userPoolArn` |
 
 Cognito domain prefixes are unique per region across all of AWS. If a deploy fails because the
@@ -38,10 +42,18 @@ still exists.
 New AWS accounts start in the SES sandbox and can only email verified addresses. Request production
 access in the SES console before inviting real users.
 
+{%- if spaSettings %}
+
 ## App URLs
 
 Callback and logout URLs live in each `src/env-*.ts`. They must match the app's origin exactly,
 with no trailing slash.
+{%- if poolSettings.environments contains "production" %}
+
+Before the first production deploy, replace `https://example.com` in `src/env-production.ts` with
+the deployed app's origin.
+{%- endif %}
+{%- endif %}
 
 ## Users
 
