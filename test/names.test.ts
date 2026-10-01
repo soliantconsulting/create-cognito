@@ -56,6 +56,7 @@ describe("toDomainPrefix", () => {
         for (const word of ["cognito", "aws", "amazon"]) {
             assert.ok(!prefix.includes(word), prefix);
         }
+
         assert.ok(prefix.endsWith("-staging"), prefix);
     });
 });
