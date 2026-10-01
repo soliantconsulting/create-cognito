@@ -1,7 +1,7 @@
 import { ListrEnquirerPromptAdapter } from "@listr2/prompt-adapter-enquirer";
 import { type ProjectContext, requireContext } from "@soliantconsulting/starter-lib";
 import type { ListrTask } from "listr2";
-import { toDomainPrefix, toDomainPrefixBase } from "../names.js";
+import { maxDomainPrefixBaseLength, toDomainPrefix, toDomainPrefixBase } from "../names.js";
 import type { CognitoEnvironment } from "./pool-settings.js";
 
 export type DomainPrefixContext = {
@@ -21,9 +21,17 @@ export const domainPrefixesTask: ListrTask<Partial<ProjectContext & DomainPrefix
             footer:
                 "Shared by every AWS account in the region, so make it specific (e.g. client-app).\n" +
                 "The environment is appended, e.g. <prefix>-staging.",
-            validate: (value: string) =>
-                toDomainPrefixBase(value) === value ||
-                'Use lowercase letters, numbers and hyphens, without "aws", "amazon" or "cognito"',
+            validate: (value: string) => {
+                if (toDomainPrefixBase(value) !== value) {
+                    return 'Use lowercase letters, numbers and hyphens, without "aws", "amazon" or "cognito"';
+                }
+
+                if (value.length > maxDomainPrefixBaseLength) {
+                    return `Use at most ${maxDomainPrefixBaseLength} characters`;
+                }
+
+                return true;
+            },
         });
 
         context.domainPrefixes = {

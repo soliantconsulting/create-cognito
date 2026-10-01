@@ -38,6 +38,11 @@ const reservedWords = /aws|amazon|cognito/g;
 const maxDomainPrefixLength = 63;
 
 /**
+ * Longest base that still fits once the longest suffix, "-production", is appended.
+ */
+export const maxDomainPrefixBaseLength = maxDomainPrefixLength - "-production".length;
+
+/**
  * Cleans a name into the base of a Cognito domain prefix. Cognito rejects prefixes containing
  * "aws", "amazon" or "cognito", and allows only lowercase letters, numbers and hyphens.
  */
