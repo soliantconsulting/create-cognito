@@ -81,10 +81,8 @@ export class CognitoStack extends Stack {
                 requireUppercase: false,
                 requireSymbols: false,
             },
-            {%- if poolSettings.mfa == "off" %}
-            mfa: Mfa.OFF,
-            {%- else %}
             mfa: Mfa.{{ poolSettings.mfa | upcase }},
+            {%- if poolSettings.mfa != "off" %}
             // Managed Login walks users through authenticator app setup only when MFA is required.
             mfaSecondFactor: { sms: false, otp: true },
             {%- endif %}

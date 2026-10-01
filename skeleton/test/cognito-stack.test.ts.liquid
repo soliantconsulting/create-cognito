@@ -156,8 +156,6 @@ describe("CognitoStack", () => {
     });
 
     it("allows no direct sign-in flows, so sign-in goes through Managed Login", () => {
-        // An empty list, not a missing one: Cognito would default a missing list to SRP, custom
-        // and refresh token auth, and refresh token auth conflicts with rotation.
         synth(false).hasResourceProperties("AWS::Cognito::UserPoolClient", {
             ExplicitAuthFlows: [],
         });

@@ -11,9 +11,7 @@ new CognitoStack(app, "{{project.name}}-staging", {
     envName: "staging",
     domainPrefix: "{{domainPrefixes.staging}}",
     fromAddress: {{ poolSettings.fromAddress | json }},
-    // Set to true after the SES verification email has been confirmed (see README).
     useSes: false,
-    // The SES identity is account-wide, so only one environment creates it.
     createEmailIdentity: true,
     {%- if spaSettings %}
     // Exact origins, no trailing slash. Add the deployed app's URL next to localhost.
