@@ -76,6 +76,12 @@ describe("CognitoStack", () => {
         });
     });
 
+    it("exports the issuer as the provider URL, which already starts with https://", () => {
+        synth(false).hasOutput("Issuer", {
+            Value: { "Fn::GetAtt": [Match.anyValue(), "ProviderURL"] },
+        });
+    });
+
     it("exports the outputs other projects rely on", () => {
         const template = synth(false);
 

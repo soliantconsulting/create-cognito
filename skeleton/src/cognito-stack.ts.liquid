@@ -150,7 +150,7 @@ export class CognitoStack extends Stack {
 
         new CfnOutput(this, "UserPoolId", { value: userPool.userPoolId });
         new CfnOutput(this, "UserPoolArn", { value: userPool.userPoolArn });
-        new CfnOutput(this, "Issuer", { value: `https://${userPool.userPoolProviderUrl}` });
+        new CfnOutput(this, "Issuer", { value: userPool.userPoolProviderUrl });
         new CfnOutput(this, "HostedDomain", { value: domain.baseUrl() });
     }
 }
