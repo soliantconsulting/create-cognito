@@ -21,8 +21,14 @@ type BaseContext = ProjectContext &
     ApiSettingsContext &
     DomainPrefixContext;
 
-const minimal = process.argv[2] === "minimal";
-const directory = minimal ? "test-synth-minimal" : "test-synth";
+const variant = process.argv[2];
+const minimal = variant === "minimal";
+const productionOnly = variant === "production";
+const directory = minimal
+    ? "test-synth-minimal"
+    : productionOnly
+      ? "test-synth-production"
+      : "test-synth";
 
 await runPipeline({
     packageName: "@soliantconsulting/create-cognito",
@@ -44,8 +50,12 @@ await runPipeline({
             friendlyName: 'Test "Pool"',
             identifier: "test-pool",
             fromAddress: "auth@example.com",
-            environments: minimal ? ["staging"] : ["staging", "production"],
-            mfa: minimal ? "off" : "required",
+            environments: minimal
+                ? ["staging"]
+                : productionOnly
+                  ? ["production"]
+                  : ["staging", "production"],
+            mfa: minimal ? "off" : productionOnly ? "optional" : "required",
         },
         spaSettings: minimal
             ? null
